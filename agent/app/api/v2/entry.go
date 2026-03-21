@@ -78,4 +78,7 @@ var (
 	alertService     = service.NewIAlertService()
 
 	diskService = service.NewIDiskService()
+
+	dnsService  = service.NewIDnsService()
+	mailService = service.NewIMailService()
 )

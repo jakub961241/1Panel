@@ -76,6 +76,11 @@ var AddTable = &gormigrate.Migration{
 			&model.McpServer{},
 			&model.RootCert{},
 			&model.ClamRecord{},
+			&model.DnsZone{},
+			&model.DnsRecord{},
+			&model.MailDomain{},
+			&model.MailAccount{},
+			&model.MailAlias{},
 		)
 	},
 }
@@ -1131,5 +1136,16 @@ var AddAITerminalSettings = &gormigrate.Migration{
 			Key:   "AIRiskCommands",
 			Value: "[\"rm -rf\",\"mkfs\",\"dd if=\",\"curl | sh\",\"wget | sh\",\"chmod -R 777 /\",\"shutdown\",\"reboot\",\"poweroff\",\"init 0\",\":(){ :|:& };:\"]",
 		}).Error
+	},
+}
+
+var AddMailTables = &gormigrate.Migration{
+	ID: "20260321-add-mail-tables",
+	Migrate: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(
+			&model.MailDomain{},
+			&model.MailAccount{},
+			&model.MailAlias{},
+		)
 	},
 }
