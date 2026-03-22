@@ -395,12 +395,26 @@ func (u *CronjobService) handleCompose(cronjob model.Cronjob, startTime time.Tim
 					return nil
 				}
 			}
-			record.FileDir = fmt.Sprintf("compose/%s", composeName)
+			src := path.Join(backupDir, record.FileName)
+			dst := strings.TrimPrefix(src, global.Dir.LocalBackupDir+"/tmp/")
+			if err := uploadWithMap(*t, accountMap, src, dst, cronjob.SourceAccountIDs, cronjob.DownloadAccountID, cronjob.RetryTimes); err != nil {
+				if retry < int(cronjob.RetryTimes) || !cronjob.IgnoreErr {
+					retry++
+					return err
+				}
+				t.Log(i18n.GetMsgWithDetail("IgnoreUploadErr", err.Error()))
+				cleanAccountMap(accountMap)
+				return nil
+			}
+			record.FileDir = path.Dir(dst)
 			if err := backupRepo.CreateRecord(&record); err != nil {
 				global.LOG.Errorf("save compose backup record failed, err: %v", err)
+				return err
 			}
-			return uploadCronjobBackFile(cronjob, accountMap, path.Join(backupDir, record.FileName), record)
-		}, nil, cronjob.RetryTimes, 0)
+			u.removeExpiredBackup(cronjob, accountMap, record)
+			cleanAccountMap(accountMap)
+			return nil
+		}, nil, int(cronjob.RetryTimes), time.Duration(cronjob.Timeout)*time.Second)
 	}
 	u.removeExpiredBackup(cronjob, accountMap, model.BackupRecord{})
 	return nil
